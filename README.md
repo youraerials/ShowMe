@@ -8,9 +8,9 @@ into your source tree's gaia/apps/system tree, peer to the system app's index.ht
 
 Then, edit the system app's index.html file and add
 
-&lt;!-- Show me --&gt;
-&lt;script defer="" src="ShowMe/js/showme.js"&gt;&lt;/script&gt;
-&lt;link rel="stylesheet" type="text/css" href="ShowMe/style/showme.css"&gt;
+&lt;!-- Show me --&gt;<br>
+&lt;script defer="" src="ShowMe/js/showme.js"&gt;&lt;/script&gt;<br>
+&lt;link rel="stylesheet" type="text/css" href="ShowMe/style/showme.css"&gt;<br>
 
 into the &lt;head&gt; block and reflash gaia onto your device
 
