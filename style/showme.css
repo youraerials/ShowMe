@@ -1,0 +1,307 @@
+
+
+/*
+ * Promote keyboards to attention screen level when show me is present */
+#screen.showme-config > [data-z-index-level="keyboards"] {
+  z-index: 16384;
+}
+
+#screen.showme-config > [data-z-index-level="value-selector"] {
+  z-index: 16384;
+}
+
+
+#notifications-container {
+  perspective: 800px;
+}
+
+
+#showme-control-panel {
+ 
+  background: #555;
+  position: absolute;
+  
+  top: 3rem;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 11rem);
+  transform: translate3d(0,0,0) rotateY(180deg);
+  backface-visibility: hidden;
+  z-index: 1;
+  transition-duration: 1s;
+  transform-style: preserve-3d;
+  transform-origin: center left;
+  padding-top: 3rem;
+  font-size: 1.6rem;
+  -moz-box-sizing: border-box;
+  
+}
+
+#showme-control-panel-access {
+  
+  position: absolute;
+  top: 3rem;
+  left: 1rem;
+  width: 5rem;
+  height: 3.5rem;
+  line-height: 3.5rem;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #555;
+  border-top: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  border-radius: 0 0 1.5rem 1.5rem;
+  z-index: 50;
+  text-align: center;
+  font-size: 1.2rem;
+  color: white;
+  transition-duration: 1s;
+  
+}
+
+#showme-control-panel-access.panel-visible {
+  color: #999;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid black;
+  border-top: none;
+  
+}
+
+#showme-control-panel.visible {
+  transform: translate3d(0,0,0) rotateY(0);
+  
+}
+
+#showme-event-catcher {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  z-index: 99999; /* need to move this higher? */
+
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  
+  display: none;
+  
+}
+
+#showme-event-catcher.touches-disabled {
+  
+  display: block;
+  
+}
+
+#showme-touchblock-indicator {
+  
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2rem;
+  background: rgba(255,0,0,0.5);
+  
+}
+
+
+
+#showme-config-server {
+  
+  width: 95%;
+  left: 0;
+  padding: 0.3em;
+  
+}
+
+#showme-control-panel input, select {
+  font-size: 1.6rem;
+  border-radius: 1.5rem;
+}
+
+
+#controller-state-toggle {
+  
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  left: 0;
+  height: 4rem;
+  border-radius: 1.5rem;
+  transform: translate3d(0,0,0px);
+  transform-style: preserve-3d;
+  perspective: 500px;
+  
+}
+
+
+#i-am-the-controller {
+  
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4rem;
+  line-height: 4rem;
+  background: red;
+  transform: translate3d(0,0,0px) rotateX(180deg);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform-origin: center center;
+  transition-duration: 1s;
+  text-align: center;
+  border-radius: 1.5rem;
+  box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+  z-index: 1;
+  
+}
+
+#i-am-a-client {
+  
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4rem;
+  line-height: 4rem;
+  background: green;
+  transform-style: preserve-3d;
+  transform: translate3d(0,0,0px) rotateX(0deg);
+  backface-visibility: hidden;
+  transform-origin: center center;
+  transition-duration: 1s;
+  text-align: center;
+  border-radius: 1.5rem;
+  box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+  
+}
+
+#controller-state-toggle.is-controller #i-am-the-controller {
+  transform: translate3d(0,0,0px) rotateX(0deg);
+}
+
+#controller-state-toggle.is-controller #i-am-a-client {
+  transform: translate3d(0,0,0) rotateX(-180deg);
+}
+
+.input-block {
+  
+  margin-top: 1rem;
+  width: 90%;
+  left: 5%;
+  min-height: 2rem;
+  position: relative;
+  
+}
+
+#showme-socket-status {
+  
+  position: absolute;
+  z-index: 101;
+  bottom: 0.5%;
+  left: 5%;
+  width: 90%;
+  height: 5%;
+  position: absolute;
+  overflow: hidden;
+  font-size: 9px;
+  text-align: left;
+  color: white;
+  font-family: monospace;
+  font-size: 8px;
+  pointer-events: none;
+  
+}
+
+#showme-socket-status span {
+  color: #999;
+}
+
+#showme-debug {
+
+  position: absolute;
+  bottom: 3%;
+  left: 5%;
+  width: 90%;
+  height: 5%;
+  font-family: monospace;
+  overflow: hidden;
+  font-size: 8px;
+  pointer-events: none;
+  color: #999;
+  
+}
+
+#show-me-peer-touches {
+
+  position: relative;
+  height: 4rem;
+  line-height: 4rem;
+  display: none;
+   
+}
+
+#show-me-peer-touches.is-controller {
+  display: block; 
+}
+
+#show-me-peer-touches.touches-disabled {
+  
+  background: red;
+  color: black;
+
+}
+
+.show-me-button {
+  
+  width: 100%;
+  left: 0;
+  font-size: 1.6rem;
+  border-radius: 1.5rem;
+  border: none;
+  height: 4rem;
+  line-height: 4rem;
+  
+}
+
+.socket-button {
+  
+  float: right; 
+  height: 4rem;
+  line-height: 4rem;
+
+}
+
+#showme-touch-indicator {
+  
+  position: absolute;
+  top: 0;
+  left: 0;
+  
+  width: 4rem;
+  height: 4rem;
+  
+  margin-top: -2rem;
+  margin-left: -2rem;
+  
+  background: #52b6cc;
+  border: 3px solid rgba(255,255,255,0.3);
+
+  border-radius: 100%;
+  
+  opacity: 0;
+  
+  pointer-events: none;
+  z-index: 1000;
+  transform: translate3d(0,0,0);
+  
+  transition-duration: 300ms;
+  pointer-events: none;
+  
+}
+
+#showme-touch-indicator.visible {
+  opacity: 1;
+} 
+
+
