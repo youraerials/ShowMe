@@ -687,7 +687,7 @@ var SocketTransport = {
         if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
 
           
-           console.log("~~~~fire touch start ");
+          console.log("~~~~fire touch start ");
           ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
           
           // do we want to fire fake mouse events as well?
@@ -695,7 +695,7 @@ var SocketTransport = {
           var y = ShowMe.startEvent[3][0];
           // ShowMe.fireMouseEvent('mousedown', ShowMe.origTarget, x, y);
 
-          ShowMe.origTarget.sendMouseEvent('mousedown', x, y, 0, 1, null);
+          //ShowMe.origTarget.sendMouseEvent('mousedown', x, y, 0, 1, null);
         } 
           
           
@@ -747,7 +747,7 @@ var SocketTransport = {
               if (canRelayMove) {
                 ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
                 // ShowMe.fireMouseEvent('mousemove', ShowMe.origTarget, x, y);
-                ShowMe.origTarget.sendMouseEvent('mousemove', x, y, 0, 1, null);
+                //ShowMe.origTarget.sendMouseEvent('mousemove', x, y, 0, 1, null);
               } 
 
 
@@ -761,9 +761,10 @@ var SocketTransport = {
                 
                 // relay touchend
                 console.log("Sending TOUCH END");
+                
                 ShowMe.relayTouchEvent(target, inEvent);
                 // ShowMe.fireMouseEvent('mouseup', target, incomingX, incomingY);
-                target.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
+                //target.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
               
               } 
                 
@@ -780,6 +781,11 @@ var SocketTransport = {
           // otherwise, just fire touch end after 80ms
           else {
             
+            
+            // some fxos elements seem to only properly recognize selection of elements
+            // when MOUSEDOWN and MOUSEUP are fired on them. WTF?
+            ShowMe.origTarget.sendMouseEvent('mousedown', incomingX, incomingY, 0, 1, null);
+            
             setTimeout(function() {
               
               console.log("~~~~~~ Sending TOUCH END with NO MOVE");
@@ -795,7 +801,8 @@ var SocketTransport = {
 
               document.querySelector("#showme-touch-indicator").classList.remove("visible");
               
-            }, 80);
+            }, timeDelta); // try passing the controller's event time delta here
+                           // to capture long-press... worst case, hard code to 80 for tap
             
           
           }
