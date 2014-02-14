@@ -18,5 +18,5 @@ after flashing, in the notifications tray, you will see a small tab at
 the top called ShowMe.  Tapping this opens and closes the ShowMe control
 panel.
 
-you can use the test relay server on bunnyandboar.com for reference or pull down 
+you can use the test relay server on bunnyandboar.com for reference (the interface will default to this URL) or pull down 
 the ShowMeServer project here and run your own!
