@@ -374,7 +374,7 @@ var ShowMe = {
         inType, true, true, window, 0, x, y, x, y, false, false, false, false, 0, null
       );
       
-      target.dispatchEvent(evt);
+      inTarget.dispatchEvent(evt);
 
   },
 
@@ -686,13 +686,16 @@ var SocketTransport = {
         // we are only relaying events to iframes for now, i.e. not "system" events 
         if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
 
+          
+           console.log("~~~~fire touch start ");
           ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
           
           // do we want to fire fake mouse events as well?
-          // var x = ShowMe.startEvent[2][0];
-          // var y = ShowMe.startEvent[3][0];
+          var x = ShowMe.startEvent[2][0];
+          var y = ShowMe.startEvent[3][0];
           // ShowMe.fireMouseEvent('mousedown', ShowMe.origTarget, x, y);
 
+          ShowMe.origTarget.sendMouseEvent('mousedown', x, y, 0, 1, null);
         } 
           
           
@@ -713,7 +716,8 @@ var SocketTransport = {
 
         
         console.log("~~~~move threshold calculated at " + moveThreshold);
-          
+        
+        
         // EMULATE MOVES if we have enough delta between touch start and touch end
         if ( Math.abs(deltaX) > moveThreshold || Math.abs(deltaY) > moveThreshold ) {
             
@@ -742,7 +746,8 @@ var SocketTransport = {
                 
               if (canRelayMove) {
                 ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
-                //ShowMe.fireMouseEvent('mousemove', ShowMe.origTarget, x, y);
+                // ShowMe.fireMouseEvent('mousemove', ShowMe.origTarget, x, y);
+                ShowMe.origTarget.sendMouseEvent('mousemove', x, y, 0, 1, null);
               } 
 
 
@@ -757,7 +762,8 @@ var SocketTransport = {
                 // relay touchend
                 console.log("Sending TOUCH END");
                 ShowMe.relayTouchEvent(target, inEvent);
-                //ShowMe.fireMouseEvent('mouseup', target, incomingX, incomingY);
+                // ShowMe.fireMouseEvent('mouseup', target, incomingX, incomingY);
+                target.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
               
               } 
                 
@@ -781,8 +787,9 @@ var SocketTransport = {
               //ShowMe.relayTouchEvent(target, inEvent);
               if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
                 ShowMe.relayTouchEvent(target, inEvent);
-                //ShowMe.fireMouseEvent('mouseup', ShowMe.origTarget, incomingX, incomingY);
+                // ShowMe.fireMouseEvent('mouseup', ShowMe.origTarget, incomingX, incomingY);
                 //ShowMe.fireMouseEvent('click', ShowMe.origTarget, incomingX, incomingY);
+                ShowMe.origTarget.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
               } 
             
 
