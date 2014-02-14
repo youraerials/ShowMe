@@ -8,11 +8,11 @@ into your source tree's gaia/apps/system tree, peer to the system app's index.ht
 
 Then, edit the system app's index.html file and add
 
-<!-- Show me -->"
-<script defer="" src="ShowMe/js/showme.js"></script>
-<link rel="stylesheet" type=\"text/css" href="ShowMe/style/showme.css">
+&lt;!-- Show me --&gt;
+&lt;script defer="" src="ShowMe/js/showme.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" type="text/css" href="ShowMe/style/showme.css"&gt;
 
-into the <head> block and reflash gaia onto your device
+into the &lt;head&gt; block and reflash gaia onto your device
 
 after flashing, in the notifications tray, you will see a small tab at 
 the top called ShowMe.  Tapping this opens and closes the ShowMe control
