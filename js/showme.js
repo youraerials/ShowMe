@@ -697,7 +697,8 @@ var SocketTransport = {
         if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
 
           
-          console.log("~~~~fire touch start ");
+          console.log("~~~~fire touch start with x: " + ShowMe.startEvent[2][0] + " and y " + ShowMe.startEvent[3][0]);
+          
           ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
           
           // do we want to fire fake mouse events as well?
@@ -794,25 +795,36 @@ var SocketTransport = {
             
             // some fxos elements seem to only properly recognize selection of elements
             // when MOUSEDOWN and MOUSEUP are fired on them. WTF?
-            ShowMe.origTarget.sendMouseEvent('mousedown', incomingX, incomingY, 0, 1, null);
-            
+            if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
+              ShowMe.origTarget.sendMouseEvent('mousedown', incomingX, incomingY, 0, 1, null);
+            }
             setTimeout(function() {
               
-              console.log("~~~~~~ Sending TOUCH END with NO MOVE");
+              console.log("~~~~~~ Sending TOUCH END with NO MOVE: x: " + incomingX + " and " + incomingY);
                             
               //ShowMe.relayTouchEvent(target, inEvent);
               if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
+                
+                //ShowMe.startEvent[0] = "touchend";
+                
+                
                 ShowMe.relayTouchEvent(target, inEvent);
-                // ShowMe.fireMouseEvent('mouseup', ShowMe.origTarget, incomingX, incomingY);
-                //ShowMe.fireMouseEvent('click', ShowMe.origTarget, incomingX, incomingY);
+                
                 ShowMe.origTarget.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
+                //target.sendMouseEvent('click', incomingX, incomingY, 0, 1, null);
+                
+                
+                
+                
+                                
+                
               } 
             
 
               document.querySelector("#showme-touch-indicator").classList.remove("visible");
               
-            }, timeDelta); // try passing the controller's event time delta here
-                           // to capture long-press... worst case, hard code to 80 for tap
+            }, 75);    // try passing the controller's event time delta here
+                       // to capture long-press... worst case, hard code to 80 for tap
             
           
           }
