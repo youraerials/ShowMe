@@ -522,6 +522,13 @@ var SocketTransport = {
         SocketTransport.isOpen = false;
         document.querySelector('#showme-socket-status').innerHTML = "error. not connected <span>0</span>";
         
+        if (SocketTransport.clientType != "controller") {
+          // send a touchend to reset us if we're clients
+          console.log("~~~Sending ERROR STATE TOUCH END");
+          ShowMe.startEvent[0] = "touchend";
+          ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
+        }
+        
         SocketTransport.recoverIfYouCan();
         
 
