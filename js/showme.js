@@ -223,27 +223,17 @@ var ShowMe = {
 
       ShowMe.log("CLICK EVENT ON SHOW ME START BUTTON!");
 
-      var socketServer = document.querySelector("#showme-config-server").value;
-
-      var socketProtocol = "fxos-showme-protocol";
-
-      var clientType = ShowMe.isController ? "controller" : "client";
-
-      var groupID = document.querySelector('#showme-config-groupid').value;
-
-
-      // throwing up blocker...
-      //if (clientType == "controller") {  
-        //screenDiv.style.display = "block";
-      //} 
-      //else {
-        //screenDiv.style.display = "none"; 
-      //}
+      ShowMe.socketServer = document.querySelector("#showme-config-server").value;
+      ShowMe.socketProtocol = "fxos-showme-protocol";
+      ShowMe.clientType = ShowMe.isController ? "controller" : "client";
+      ShowMe.groupID = document.querySelector('#showme-config-groupid').value;
 
       ShowMe.log("TRYING TO CONNECT TO SOCKET SERVER: ");
-      ShowMe.log("server: " + socketServer + " clientType: " + clientType + " group: " + groupID);
+      ShowMe.log("server: " + ShowMe.socketServer + " clientType: " + ShowMe.clientType + " group: " + ShowMe.groupID);
 
-      SocketTransport.openNewSocketCx(socketServer, socketProtocol, clientType, groupID);
+      SocketTransport.openNewSocketCx(
+          ShowMe.socketServer, ShowMe.socketProtocol, ShowMe.clientType, ShowMe.groupID
+      );
 
 
     }, false);
@@ -485,6 +475,15 @@ var SocketTransport = {
 
 
     if (SocketTransport.socket) {
+      
+      // clean up from recovery, as needed: 
+      if (SocketTransport.recoveryInterval) {
+        clearInterval(SocketTransport.recoveryInterval); 
+      }
+      SocketTransport.recoveryInterval = 0;
+      SocketTransport.recoveryTries = 0;
+      
+      
 
       document.querySelector('#showme-socket-status').innerHTML = "connected: " + SocketTransport.clientType + " <span>0</span>";
 
@@ -499,7 +498,8 @@ var SocketTransport = {
         // say hi to the server!
         var msg = '{ "clientID": "' + SocketTransport.clientID + '", "clientType":"' + SocketTransport.clientType + '", "groupID": "' + SocketTransport.groupID + '", "type": "hello", "status": "ok", "message": "hello", "x": 0, "y": 0 }';
         SocketTransport.socket.send(msg);
-
+        
+      
       });
 
 
@@ -521,6 +521,9 @@ var SocketTransport = {
 
         SocketTransport.isOpen = false;
         document.querySelector('#showme-socket-status').innerHTML = "error. not connected <span>0</span>";
+        
+        SocketTransport.recoverIfYouCan();
+        
 
       });
 
@@ -891,12 +894,69 @@ var SocketTransport = {
       catch(er){
         //SocketTransport.queueEvent(inEvent, inTargetID, inNodeName);
         ShowMe.log("SOCKET ERROR, event not sent!!!! " + er.message);
+        
+        SocketTransport.recoverIfYouCan();
       }
 
     } 
   
     
-  } // end sendEvent
+  }, // end sendEvent
+  
+  
+  // catch all error coverage, on socket errors, we will try to
+  // reconnect every second for up to 120 seconds!
+  recoveryQueueMessage: null,
+  recoveryTries: 0,
+  recoveryInterval: 0,
+  recoverIfYouCan: function socket_recover(inMessage) {
+    
+    if (SocketTransport.recoveryTries < 1) { // that is, if we're already in a recovery loop, don't try again
+    
+      if (inMessage) {
+        SocketTransport.recoveryQueueMessage = inMessage;
+    
+      }
+      
+      if (! SocketTransport.recoveryInterval) {
+        SocketTransport.recoveryInterval = setInterval(SocketTransport.tryRecover, 1000);
+      }
+      
+    } // end if recoveryTries check
+  }, 
+  
+  tryRecover: function() {
+    
+    SocketTransport.recoveryTries ++;
+    
+    console.log("runnign recovery loop: try # " + SocketTransport.recoveryTries);
+    
+    if (SocketTransport.recoveryTries < 120) {
+        
+      try {
+        
+        SocketTransport.openNewSocketCx(
+          ShowMe.socketServer, ShowMe.socketProtocol, ShowMe.clientType, ShowMe.groupID
+        );
+      }
+      catch(er) {
+       
+        console.log("SHOW ME: tryRecover couldn't open socket, " + er.message);
+      
+      }
+  
+    }
+    else {
+       
+      console.log("SHOW ME: giving up on trying to reconnect to socket server, trying for 2 minutes");
+      
+      clearInterval(SocketTransport.recoveryInterval);
+      SocketTransport.recoveryTries = 0;
+      
+    }
+  
+    
+  }
 
 
 };
