@@ -221,19 +221,31 @@ var ShowMe = {
     
     document.querySelector("#showme-start").addEventListener('touchend', function () {
 
-      ShowMe.log("CLICK EVENT ON SHOW ME START BUTTON!");
+      //ShowMe.log("CLICK EVENT ON SHOW ME START BUTTON!");
 
-      ShowMe.socketServer = document.querySelector("#showme-config-server").value;
-      ShowMe.socketProtocol = "fxos-showme-protocol";
-      ShowMe.clientType = ShowMe.isController ? "controller" : "client";
-      ShowMe.groupID = document.querySelector('#showme-config-groupid').value;
+      if (SocketTransport.socket) {
 
-      ShowMe.log("TRYING TO CONNECT TO SOCKET SERVER: ");
-      ShowMe.log("server: " + ShowMe.socketServer + " clientType: " + ShowMe.clientType + " group: " + ShowMe.groupID);
+        SocketTransport.socket.close();
+        
+        document.querySelector("#showme-start").value = "Connect";
 
-      SocketTransport.openNewSocketCx(
-          ShowMe.socketServer, ShowMe.socketProtocol, ShowMe.clientType, ShowMe.groupID
-      );
+      }
+      else {
+        
+      
+        ShowMe.socketServer = document.querySelector("#showme-config-server").value;
+        ShowMe.socketProtocol = "fxos-showme-protocol";
+        ShowMe.clientType = ShowMe.isController ? "controller" : "client";
+        ShowMe.groupID = document.querySelector('#showme-config-groupid').value;
+
+        ShowMe.log("TRYING TO CONNECT TO SOCKET SERVER: ");
+        ShowMe.log("server: " + ShowMe.socketServer + " clientType: " + ShowMe.clientType + " group: " + ShowMe.groupID);
+
+        SocketTransport.openNewSocketCx(
+            ShowMe.socketServer, ShowMe.socketProtocol, ShowMe.clientType, ShowMe.groupID
+        );
+        
+      }
 
 
     }, false);
@@ -274,7 +286,7 @@ var ShowMe = {
       
       var eventType = inEvent.detail.type;
       
-      document.querySelector("#showme-socket-status").innerHTML = "mozChromeEvent type? <span>" + eventType + "</span>";
+      //document.querySelector("#showme-socket-status").innerHTML = "mozChromeEvent type? <span>" + eventType + "</span>";
        
       
       if (
@@ -314,7 +326,7 @@ var ShowMe = {
       
 
     }
-    if (document.querySelector("#showme-debug")) {
+    if (document.querySelector("#showme-debug") && inLog) {
       document.querySelector("#showme-debug").innerHTML = inLog;
     }
 
@@ -483,17 +495,38 @@ var SocketTransport = {
       SocketTransport.recoveryInterval = 0;
       SocketTransport.recoveryTries = 0;
       
-      
+      document.querySelector("#showme-start").value = "Connecting...";
 
-      document.querySelector('#showme-socket-status').innerHTML = "connected: " + SocketTransport.clientType + " <span>0</span>";
+      document.querySelector('#showme-socket-status').innerHTML = "Connecting... " + SocketTransport.clientType + " <span>0</span>";
 
       SocketTransport.clientID = SocketTransport.generateID();
+      
+      
+      // set a timeout for the connection?
+      SocketTransport.isOpen = false;
+      setTimeout(function() {
+        
+        if (! SocketTransport.isOpen) {
+          
+          
+          document.querySelector('#showme-socket-status').innerHTML = "Can't connect. Are you on the network? " + SocketTransport.clientType + " <span>0</span>";
+          
+        
+        }
+        
+        
+      }, 3000);
+      
 
       SocketTransport.socket.addEventListener("open", function (event) {
 
         SocketTransport.isOpen = true;
+        
+        document.querySelector('#showme-socket-status').innerHTML = "Connected! " + SocketTransport.clientType + " <span>0</span>";
 
         ShowMe.log("SOCKET Connected!");
+        
+        document.querySelector("#showme-start").value = "Disconnect";
 
         // say hi to the server!
         var msg = '{ "clientID": "' + SocketTransport.clientID + '", "clientType":"' + SocketTransport.clientType + '", "groupID": "' + SocketTransport.groupID + '", "type": "hello", "status": "ok", "message": "hello", "x": 0, "y": 0 }';
@@ -516,9 +549,8 @@ var SocketTransport = {
       
       SocketTransport.socket.addEventListener("error", function (inError) {
 
-        ShowMe.log("there was a socket error: ");
-        ShowMe.log(inError.message)
-
+        ShowMe.log("there was a socket error: " + inError.code);
+        
         SocketTransport.isOpen = false;
         document.querySelector('#showme-socket-status').innerHTML = "error. not connected <span>0</span>";
         
@@ -528,6 +560,9 @@ var SocketTransport = {
           ShowMe.startEvent[0] = "touchend";
           ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
         }
+        
+        
+        document.querySelector("#showme-start").value = "Connect";
         
         SocketTransport.recoverIfYouCan();
         
@@ -539,6 +574,8 @@ var SocketTransport = {
         SocketTransport.socket = false;
         SocketTransport.isOpen = false;
         document.querySelector('#showme-socket-status').innerHTML = "not connected <span>0</span>";
+        
+        document.querySelector("#showme-start").value = "Connect";
 
       });
 
@@ -546,6 +583,7 @@ var SocketTransport = {
     
     else {
       document.querySelector('#showme-socket-status').innerHTML = "not connected <span>0</span>";
+      document.querySelector("#showme-start").value = "Connect";
     }
     
     this.callCount = 0;

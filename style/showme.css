@@ -198,7 +198,7 @@
   
   position: absolute;
   z-index: 101;
-  bottom: 0.5%;
+  bottom: 5%;
   left: 5%;
   width: 90%;
   height: 5%;
@@ -208,7 +208,7 @@
   text-align: left;
   color: white;
   font-family: monospace;
-  font-size: 8px;
+  font-size: 10px;
   pointer-events: none;
   
 }
@@ -220,7 +220,7 @@
 #showme-debug {
 
   position: absolute;
-  bottom: 3%;
+  bottom: 0.5%;
   left: 5%;
   width: 90%;
   height: 5%;
