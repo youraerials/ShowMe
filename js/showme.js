@@ -175,9 +175,9 @@ var ShowMe = {
 
 
         // for this version, we ONLY relay events for apps and the home screen!
-        if (target.nodeName.toLowerCase() == "iframe") {
+        //if (target.nodeName.toLowerCase() == "iframe") {
           SocketTransport.sendEvent(inEvent, ShowMe.lastTarget, ShowMe.lastTarget.nodeName);
-        }
+        //}
 
       }
 
@@ -202,9 +202,9 @@ var ShowMe = {
         console.log("touched from x: " + ShowMe.origX + " y: " + ShowMe.origY);
         console.log("touched  to  x: " + endX + " y: " + endY);
 
-        if (target.nodeName.toLowerCase() == "iframe") {
+        //if (target.nodeName.toLowerCase() == "iframe") {
           SocketTransport.sendEvent(inEvent, ShowMe.lastTarget, ShowMe.lastTarget.nodeName);
-        }
+        //}
         
       } 
 
@@ -364,6 +364,10 @@ var ShowMe = {
     );
 
     inTarget.dispatchEvent(touchEvent);
+    
+    if (inName == "touchstart") ShowMe.fireMouseEvent("mousedown", inTarget, inEvent.pageX, inEvent.pageY);
+    else if (inName == "touchmove") ShowMe.fireMouseEvent("mousemove", inTarget, inEvent.pageX, inEvent.pageY);
+    else if (inName == "touchend") ShowMe.fireMouseEvent("mouseup", inTarget, inEvent.pageX, inEvent.pageY);
 
   },
 
@@ -383,11 +387,38 @@ var ShowMe = {
   
   relayTouchEvent: function sm_relayTouchEvent (inFrame, inEvent) {
 
-
-    inFrame.sendTouchEvent.apply(null, inEvent);
+    
+    // ok so, it looks to me like the ref devices need "real" pixels
+    // to pass to sendTouchEvent().  right now we're scaled to X, so
+    // multiply the event location by X
+    
+    // device thinks it is  WIDTH: 320 HEIGHT: 569
+    // actual resolution is: 
+    
+    // window.devicePixelRatio
+    
+    // actual res is 1.5x so...  HATE THIS! 
+    
+    inEvent[2][0] *= window.devicePixelRatio;
+    inEvent[3][0] *= window.devicePixelRatio;
+    
+    console.log("!!!!!!!!! x: " + inEvent[2]);
+    console.log("!!!!!!!!! y: " + inEvent[3]);
+    
+    //inFrame.sendTouchEvent.apply(null, inEvent);
 
     ShowMe.log(" +++ sending new touch event +++ ");
-
+    ShowMe.log(" +++ name: " + inEvent[0] + " X: " + inEvent[2][0] + " and Y: " + inEvent[3][0] + " +++ ");
+    ShowMe.log("WINDOW WIDTH: " + window.innerWidth + " HEIGHT: " + window.innerHeight);
+    
+    try {
+      
+      //inFrame.sendTouchEvent(inEvent);
+      inFrame.sendTouchEvent.apply(null, inEvent);
+    }
+    catch(er) {
+      console.log(er.message); 
+    }
   },
 
 
@@ -484,6 +515,13 @@ var SocketTransport = {
       SocketTransport.socket = false;
 
     }
+    
+    
+    console.log("-----------------------------------------------------------------");
+    console.log("-----------------------------------------------------------------");
+    console.log(navigator.userAgent);
+    console.log("-----------------------------------------------------------------");
+    console.log("-----------------------------------------------------------------");
 
 
     if (SocketTransport.socket) {
@@ -557,8 +595,13 @@ var SocketTransport = {
         if (SocketTransport.clientType != "controller") {
           // send a touchend to reset us if we're clients
           console.log("~~~Sending ERROR STATE TOUCH END");
-          ShowMe.startEvent[0] = "touchend";
-          ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
+          
+          if (ShowMe.startEvent) {
+            
+            ShowMe.startEvent[0] = "touchend";
+            ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
+          
+          }
         }
         
         
@@ -672,11 +715,12 @@ var SocketTransport = {
     
     else if (inMessage.type == "uiEvent" && inMessage.clientID != SocketTransport.clientID) {
 
-
+      
       //ShowMe.log("INCOMING EVENT RECEIVED!");
       //ShowMe.log("message for group: " + inMessage.groupID);
       //ShowMe.log(inMessage.uiEvent);
 
+      
       var cleanEvent = inMessage.uiEvent.replace(/'/g, '"');
 
       var inEvent = JSON.parse(cleanEvent);
@@ -707,14 +751,14 @@ var SocketTransport = {
         ShowMe.origTarget = target;
         ShowMe.eventStartTime = inMessage.timestamp;
         
-        if (target.nodeName.toLowerCase() == "iframe") {
+        //if (target.nodeName.toLowerCase() == "iframe") {
           
           document.querySelector("#showme-touch-indicator").classList.add("visible");
           var translateString = incomingX + "px, " + incomingY + "px, 0";
           document.querySelector("#showme-touch-indicator").style.transform = 
               "translate3d(" + translateString + ")";
         
-        }
+        //}
 
       } 
       
@@ -742,10 +786,16 @@ var SocketTransport = {
           // do we want to fire fake mouse events as well?
           var x = ShowMe.startEvent[2][0];
           var y = ShowMe.startEvent[3][0];
-          // ShowMe.fireMouseEvent('mousedown', ShowMe.origTarget, x, y);
 
-          //ShowMe.origTarget.sendMouseEvent('mousedown', x, y, 0, 1, null);
+
+          ShowMe.origTarget.sendMouseEvent('mousedown', x, y, 0, 1, null);
         } 
+        else { // try to relay the touch to the system level
+          
+          
+          ShowMe.fireTouchEvent(ShowMe.startEvent, ShowMe.origTarget, "touchstart");
+          
+        }
           
           
         var deltaX = incomingX - ShowMe.origX;
@@ -754,7 +804,7 @@ var SocketTransport = {
         
         // we want the minimum # of steps here for better performance
         // particularly on older hardware, the event firing takes longer than the interval
-        var touchEmulationSteps = 6;
+        var touchEmulationSteps = 12;
         var vectorIncrement = { x: deltaX / touchEmulationSteps, y: deltaY / touchEmulationSteps };
           
         // on high-res screens, the vector increment in real pixels will be very small
@@ -768,6 +818,7 @@ var SocketTransport = {
         
         
         // EMULATE MOVES if we have enough delta between touch start and touch end
+        //!!!! testing
         if ( Math.abs(deltaX) > moveThreshold || Math.abs(deltaY) > moveThreshold ) {
             
           var incrementTimeBasedOnTimeDelta = timeDelta / touchEmulationSteps;
@@ -778,7 +829,6 @@ var SocketTransport = {
 
           // now fire [touchEmulationSteps] move events based on the vector:
           var vectorIndex = 1;
-          var canRelayMove = ShowMe.origTarget.nodeName.toLowerCase() == "iframe";
           var vectorInterval = setInterval(function() {
 
               
@@ -792,12 +842,17 @@ var SocketTransport = {
                               
               //console.log("~~~Sending TOUCH MOVE to " + x + " and " + y);
               //ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
+              
+              var currentTarget = document.elementFromPoint(x, y);
                 
-              if (canRelayMove) {
-                ShowMe.relayTouchEvent(ShowMe.origTarget, ShowMe.startEvent);
-                // ShowMe.fireMouseEvent('mousemove', ShowMe.origTarget, x, y);
-                //ShowMe.origTarget.sendMouseEvent('mousemove', x, y, 0, 1, null);
-              } 
+              if (currentTarget.nodeName.toLowerCase() == "iframe") {
+                ShowMe.relayTouchEvent(currentTarget, ShowMe.startEvent);
+
+                currentTarget.sendMouseEvent('mousemove', x, y, 0, 1, null);
+              }
+              else {
+                ShowMe.fireTouchEvent(ShowMe.startEvent, currentTarget, "touchmove"); 
+              }
 
 
             }
@@ -806,16 +861,19 @@ var SocketTransport = {
               console.log("~~~clearing interval!");
               clearInterval(vectorInterval);
 
-              if (canRelayMove) {
+              if (target.nodeName.toLowerCase() == "iframe") {
                 
                 // relay touchend
                 console.log("Sending TOUCH END");
                 
                 ShowMe.relayTouchEvent(target, inEvent);
-                // ShowMe.fireMouseEvent('mouseup', target, incomingX, incomingY);
-                //target.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
+                
+                target.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
               
               } 
+              else {
+                ShowMe.fireTouchEvent(inEvent, target, "touchend");   
+              }
                 
               document.querySelector("#showme-touch-indicator").classList.remove("visible");
 
@@ -833,9 +891,9 @@ var SocketTransport = {
             
             // some fxos elements seem to only properly recognize selection of elements
             // when MOUSEDOWN and MOUSEUP are fired on them. WTF?
-            if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
-              ShowMe.origTarget.sendMouseEvent('mousedown', incomingX, incomingY, 0, 1, null);
-            }
+            //if (ShowMe.origTarget.nodeName.toLowerCase() == "iframe") {
+              //ShowMe.origTarget.sendMouseEvent('mousedown', incomingX, incomingY, 0, 1, null);
+            //}
             setTimeout(function() {
               
               console.log("~~~~~~ Sending TOUCH END with NO MOVE: x: " + incomingX + " and " + incomingY);
@@ -845,23 +903,22 @@ var SocketTransport = {
                 
                 //ShowMe.startEvent[0] = "touchend";
                 
-                
                 ShowMe.relayTouchEvent(target, inEvent);
                 
-                ShowMe.origTarget.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
+                target.sendMouseEvent('mouseup', incomingX, incomingY, 0, 1, null);
                 //target.sendMouseEvent('click', incomingX, incomingY, 0, 1, null);
+                           
                 
-                
-                
-                
-                                
-                
-              } 
+              }
+              else {
+                ShowMe.fireTouchEvent(inEvent, target, "touchend");   
+              }
+              
             
 
               document.querySelector("#showme-touch-indicator").classList.remove("visible");
               
-            }, 75);    // try passing the controller's event time delta here
+            }, timeDelta);    // try passing the controller's timeDelta here
                        // to capture long-press... worst case, hard code to 80 for tap
             
           
@@ -909,55 +966,77 @@ var SocketTransport = {
   // relay event to the server
   sendEvent: function (inEvent, inTargetID, inNodeName) {
 
-    ShowMe.log("trying to relay as: " + SocketTransport.clientType);
+    // block touches on the showme interface itself!
     
-    this.callCount ++;
+    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    console.log("CHECKING TARGET ID");
+    console.log(inTargetID.id);
     
-    if (! document.querySelector('#showme-socket-status span')) {
-      document.querySelector('#showme-socket-status').innerHTML += "<span>0</span>"; 
+    if (inTargetID.id == "showme-control-panel") {
+      return; 
     }
     
-    document.querySelector('#showme-socket-status span').innerHTML = 
-        this.callCount;
-    
-    if (! SocketTransport.socket.send) {
+    if (SocketTransport.isOpen) {
       
-       document.querySelector('#showme-socket-status').innerHTML = "NO SOCKET <span>0</span>";
-       return;
-    }
+      
+      
     
-    
-    if (SocketTransport.clientType == "controller") {
+      ShowMe.log("trying to relay as: " + SocketTransport.clientType);
 
-      ShowMe.log("SENDING EVENT");
+      this.callCount ++;
 
-      var evt = ShowMe.unSynthetizeEvent(inEvent);
-      var evtString = JSON.stringify(evt);
-      evtString = evtString.replace(/"/g, "'");
-
-      ShowMe.log("EVENT STRING");
-      ShowMe.log(evtString);
-
-
-      //! TBD!  Follow action time stamps on controller and repro on client with accurate time...
-      var timestamp = new Date().getTime();
-
-      var msg = '{ "clientID": "' + SocketTransport.clientID + '", "groupID": "' + SocketTransport.groupID + '", "type": "uiEvent", "targetID": "' + inTargetID + '", "nodeName": "' + inNodeName + '", "status": "ok", "uiEvent": "' + evtString + '", "x": 0, "y": 0, "timestamp": ' + timestamp + ' }';
-
-
-      try {
-        SocketTransport.socket.send(msg);
-      }
-      catch(er){
-        //SocketTransport.queueEvent(inEvent, inTargetID, inNodeName);
-        ShowMe.log("SOCKET ERROR, event not sent!!!! " + er.message);
-        
-        SocketTransport.recoverIfYouCan();
+      if (! document.querySelector('#showme-socket-status span')) {
+        document.querySelector('#showme-socket-status').innerHTML += "<span>0</span>"; 
       }
 
-    } 
+      document.querySelector('#showme-socket-status span').innerHTML = 
+          this.callCount;
+
+      if (! SocketTransport.socket.send) {
+
+         document.querySelector('#showme-socket-status').innerHTML = "NO SOCKET <span>0</span>";
+         return;
+      }
+
+
+      if (SocketTransport.clientType == "controller") {
+
+        ShowMe.log("SENDING EVENT");
+
+        var evt = ShowMe.unSynthetizeEvent(inEvent);
+        var evtString = JSON.stringify(evt);
+        evtString = evtString.replace(/"/g, "'");
+
+        ShowMe.log("EVENT STRING");
+        ShowMe.log(evtString);
+
+
+        //! TBD!  Follow action time stamps on controller and repro on client with accurate time...
+        var timestamp = new Date().getTime();
+
+        var msg = '{ "clientID": "' + SocketTransport.clientID + '", "groupID": "' + SocketTransport.groupID + '", "type": "uiEvent", "targetID": "' + inTargetID + '", "nodeName": "' + inNodeName + '", "status": "ok", "uiEvent": "' + evtString + '", "x": 0, "y": 0, "timestamp": ' + timestamp + ' }';
+
+
+        try {
+          SocketTransport.socket.send(msg);
+        }
+        catch(er){
+          //SocketTransport.queueEvent(inEvent, inTargetID, inNodeName);
+          ShowMe.log("SOCKET ERROR, event not sent!!!! " + er.message);
+
+          SocketTransport.recoverIfYouCan();
+        }
+
+      } 
   
     
+    } // end isOpen check
+    else {
+     
+      console.log("SOCKET NO OPEN, EVENT NOT SENT");
+      
+    }
+      
   }, // end sendEvent
   
   
